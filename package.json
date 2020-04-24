@@ -1,0 +1,13 @@
+{
+  "name": "screensharer",
+  "scripts": {
+    "start": "node screenshare.js"
+  },
+  "dependencies": {
+    "discord.js": "^12.2.0",
+    "common-tags": "^1.8.0"
+  },
+  "engines": {
+    "node": "12.x"
+  }
+}
