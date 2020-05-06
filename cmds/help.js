@@ -1,42 +1,47 @@
 const Discord = require('discord.js');
-exports.run = function(client, msg, args) {
+
+exports.run = async function(client, msg, args) {
   if(args[0]) {
-    if(client.commands.has(args[0]) || client.aliases.has(args[0])) {
-      let cmd;
-      if(client.aliases.has(args[0]) && !client.commands.has(args[0])) cmd = client.commands.get(client.alises.get(args[0]));
-      if(!client.aliases.has(args[0]) && client.commands.has(args[0])) cmd = client.commands.get(args[0]);
-      let aliases;
-      if(cmd.conf.aliases.length == 0) aliases = "";
-      if(cmd.conf.aliases.length) {
-        function splitAliases(x) {
-          return x.conf.aliases.map(alias => `\`${alias}\``).join(", ")
-        };  
-        aliases = splitAliases(cmd)
+    let cmd;
+
+    if(client.aliases.has(args[0]) && !client.commands.has(args[0])) cmd = client.commands.get(client.aliases.get(args[0]));
+    if(!client.aliases.has(args[0]) && client.commands.has(args[0])) cmd = client.commands.get(args[0]);
+    if(typeof cmd != "undefined") {
+      let embed = new Discord.MessageEmbed();
+      embed.setDescription(cmd.help.description);
+      embed.setColor("#2294D5");
+      embed.setFooter(`Help for sys ${args[0]}`);
+
+      if(cmd.conf.aliases.length != 0) {
+        embed.addField("Aliases", cmd.conf.aliases.map(alias => `\`${alias}\``));
       }
-      let embed = new Discord.MessageEmbed()
-      .setDescription(cmd.help.description).setColor("#2294D5").setFooter(`Help for sys ` + args[0]);
-      if(aliases != "") {
-        embed.addField(`Aliases`, aliases);
-      }
-      msg.channel.send(embed).catch(e => {})
+
+      await msg.channel.send(embed);
+      return;
     } else {
-      msg.channel.send("I couldn't find `" + args[0] + "` in my commands. Maybe a typo?")
+      await msg.channel.send(`I couldn't find \`${args[0]}\` in my commands. Maybe a typo?`);
+      return;
     }
   } else {
-    function categorizedByMain(x) {
-      return client.commands.filter(cmd => cmd.help.cg == "main").map(cmd => `\`${cmd.help.name}\``).join(", ")
-    };
-    function categorizedByUtility(x) {
-      return client.commands.filter(cmd => cmd.help.cg == "utility").map(cmd => `\`${cmd.help.name}\``).join(", ")
-    };  
-    let mainCommands = categorizedByMain(client.commands);
-    let utilityCommands = categorizedByUtility(client.commands);
+    let categories = new Object();
+    
+    for(let i = 0; i < client.commands.array().size; i++) {
+      if(!categories.hasOwnProperty(client.commands.array()[i].cg)) {
+        categories[client.commands.array()[i].cg] = new Array();
+      }
+
+      categories[client.commands.array()[i].cg].push(`\`${client.commands.array()[i].name}\``)
+    }
+
     let embed = new Discord.MessageEmbed()
-    .setColor("#2294D5")
-    .setDescription(`You can get detailed help in our support server, join it by clicking [here](https://discord.gg/JajWkmj), if you want detailed to see description of a command type  \`sys help <command>\`.`)
-    .addField(`Main commands`, mainCommands)
-    .addField(`Utility commands`, utilityCommands)
-    msg.channel.send(embed).catch(e => {});
+    embed.setColor("#2294D5")
+    embed.setDescription(`You can get detailed help in our support server, join it by clicking [here](https://discord.gg/JajWkmj), if you want detailed to see description of a command type  \`sys help <command>\`.`)
+    
+    for(let i = 0; i < Object.keys(categories).length; i++) {
+      embed.addField(`${Object.keys(categories)[i].charAt(0).toUpperCase()}${Object.keys(categories)[i].slice(1)}`, Object.values(categories)[i].join(" **|** "));
+    }
+
+    await msg.channel.send(embed);
   }
 };
 
